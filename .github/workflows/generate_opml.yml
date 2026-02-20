@@ -1,0 +1,34 @@
+name: Generate YouTube OPML
+
+on:
+  push:
+    paths:
+      - 'subscriptions.csv'   # Re-run whenever you update the CSV
+  workflow_dispatch:           # Also allow manual triggering
+
+jobs:
+  generate-opml:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write          # Needed to commit the output file back
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate OPML from subscriptions.csv
+        run: python generate_opml.py subscriptions.csv youtube_feeds.opml
+
+      - name: Commit and push OPML file
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add youtube_feeds.opml
+          git diff --cached --quiet || git commit -m "chore: update youtube_feeds.opml [skip ci]"
+          git push
